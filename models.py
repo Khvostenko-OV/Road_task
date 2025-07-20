@@ -15,6 +15,9 @@ Base = declarative_base()
 
 
 class User(UserMixin, Base):
+    '''
+        Model for user (networks owners)
+    '''
     __tablename__ = "users"
     id = Column(Integer(), primary_key=True)
     username = Column(String(32), nullable=False, unique=True)
@@ -43,6 +46,9 @@ class User(UserMixin, Base):
 
 
 class Network(Base):
+    '''
+        Model for road network
+    '''
     __tablename__ = "networks"
     id = Column(Integer(), primary_key=True)
     name = Column(String(128), nullable=False, unique=True)
@@ -64,7 +70,10 @@ class Network(Base):
 
     @property
     def versions(self) -> dict:
-        res = db_session.query(Map.id, Map.version).filter(Map.network_id == self.id).order_by("version")
+        '''
+            Returns a dict of versions { key - version number: value - map id }
+        '''
+        res = db_session.query(Map.id, Map.version).filter(Map.network_id == self.id).all()
         return {r[1]: r[0] for r in res}
 
     @property
@@ -82,6 +91,9 @@ class Network(Base):
 
 
 class Map(Base):
+    '''
+        Model for map linked to the network (version)
+    '''
     __tablename__ = "maps"
     id = Column(Integer(), primary_key=True)
     network_id = Column(Integer(), ForeignKey("networks.id", ondelete="CASCADE"))
@@ -99,6 +111,9 @@ class Map(Base):
 
     @property
     def feature_count(self) -> int:
+        '''
+            Count of map features
+        '''
         return db_session.query(func.count(Feature.id)).filter(Feature.map_id == self.id).scalar()
 
     @property
@@ -108,13 +123,20 @@ class Map(Base):
             "network_id": self.network_id,
             "network": self.network.name,
             "version": self.version,
+            "created_at": self.created_at,
         }
 
     @property
     def edges(self) -> list:
+        '''
+            Converting geometries to list[json]
+        '''
         return [{"geometry": mapping(to_shape(feat.geom))} for feat in self.features]
 
     def add_geodata(self, geojson):
+        '''
+            Parsing geojson to list of features with geometry and properties
+        '''
         self.type = geojson.get("type", "")
         self.name = geojson.get("name", "")
         self.crs = geojson.get("crs", {})
@@ -126,6 +148,9 @@ class Map(Base):
 
 
 class Feature(Base):
+    '''
+        Model for feature with properties and geometry
+    '''
     __tablename__ = "features"
     id = Column(Integer(), primary_key=True)
     map_id = Column(Integer(), ForeignKey("maps.id", ondelete="CASCADE"))

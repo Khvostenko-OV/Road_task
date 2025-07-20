@@ -65,6 +65,14 @@ def logout():
 @app.route("/add_network", methods=["post"])
 @login_required
 def add_network():
+    '''
+        Add new road network
+        :param
+            name (str) - network name
+            file (file) - geojson file (type - FeatureCollection)
+
+        Creates new map (version 1)
+    '''
 
     name = request.form.get("name")
     if not name:
@@ -93,25 +101,44 @@ def add_network():
     return jsonify(new_network.to_dict), 201
 
 
+def search_network(network_id: int = 0, network_name: str = "") -> (Network, str, int):
+    '''
+        Search network by id or by name. If both parameters are set, the search is by id
+    '''
+    if not (network_id or network_name):
+        return None, "Network id or network name is required", 400
+
+    if network_id:
+        network = db_session.get(Network, network_id)
+    else:
+        network = db_session.query(Network).filter(Network.name == network_name).first()
+
+    if not network:
+        return None, f"Network {f'id={network_id}' if network_id else network_name} not found", 404
+
+    return network, "", 0
+
+
 @app.route("/update_network", methods=["post"])
 @login_required
 def update_network():
+    '''
+        Add new map to existing network
+        :param
+            id (int) - network id (preferred)
+            name (str) - network name
+            file (file) - geojson file (type - FeatureCollection)
 
-    network_id = int(request.form.get("network_id", 0))
-    network_name = request.form.get("name")
-    if not (network_id or network_name):
-        return jsonify({"error": "Network name or network id required"}), 400
+        The network is searched by id or by name. If both parameters are set, the search is by id
+    '''
 
     if not ("file" in request.files):
         return jsonify({"error": "GeoJSON file required"}), 400
     file = request.files.get("file")
 
-    if network_id:
-        network = db_session.query(Network).filter(Network.id == network_id).first()
-    else:
-        network = db_session.query(Network).filter(Network.name == network_name).first()
+    network, err, err_code = search_network(int(request.form.get("id", 0)), request.form.get("name"))
     if not network:
-        return jsonify({"error": f"Network {network_id or network_name} not found"}), 404
+        return jsonify({"error": err}), err_code
 
     if network.owner_id != current_user.id:
         return jsonify({"error": "Access denied! Authentication required!"}), 401
@@ -135,18 +162,18 @@ def update_network():
 
 @app.route("/network/")
 def get_network():
+    '''
+        Get network info
+        :param
+            id (int) - network id (preferred)
+            name (str) - network name
 
-    network_id = int(request.args.get("id", 0))
-    network_name = request.args.get("name")
-    if not (network_id or network_name):
-        return jsonify({"error": "Network name or network id required"}), 400
+        The network is searched by id or by name. If both parameters are set, the search is by id
+    '''
 
-    if network_id:
-        network = db_session.query(Network).filter(Network.id == network_id).first()
-    else:
-        network = db_session.query(Network).filter(Network.name == network_name).first()
+    network, err, err_code = search_network(int(request.args.get("id", 0)), request.args.get("name"))
     if not network:
-        return jsonify({"error": f"Network {f'id={network_id}' if network_id else network_name} not found"}), 404
+        return jsonify({"error": err}), err_code
 
     if not network.public and (not current_user.is_authenticated or network.owner_id != current_user.id):
         return jsonify({"error": "Access denied! Authentication required!"}), 401
@@ -156,23 +183,24 @@ def get_network():
 
 @app.route("/network/edges/")
 def get_map():
+    '''
+        Get defined version of network edges
+        :param
+            id (int) - network id (preferred)
+            name (str) - network name
+            version (int, optional) - version number. If not set returns latest version
 
-    network_id = int(request.args.get("network_id", 0))
-    network_name = request.args.get("network_name")
-    version = int(request.args.get("version", 0))
-    if not (network_id or network_name):
-        return jsonify({"error": "Network name or network id required"}), 400
+        The network is searched by id or by name. If both parameters are set, the search is by id
+    '''
 
-    if network_id:
-        network = db_session.query(Network).filter(Network.id == network_id).first()
-    else:
-        network = db_session.query(Network).filter(Network.name == network_name).first()
+    network, err, err_code = search_network(int(request.args.get("id", 0)), request.args.get("name"))
     if not network:
-        return jsonify({"error": f"Network {f'id={network_id}' if network_id else network_name} not found"}), 404
+        return jsonify({"error": err}), err_code
 
     if not network.public and (not current_user.is_authenticated or network.owner_id != current_user.id):
         return jsonify({"error": "Access denied! Authentication required!"}), 401
 
+    version = int(request.args.get("version", 0))
     if not version:
         version = network.latest_version
     map_id = network.versions.get(version)

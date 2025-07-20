@@ -9,15 +9,18 @@ docker-compose pull
 docker-compose up -d
 ```
 
+- After startup, the Flask application will be running on port **5000**
+- To test it on your local machine, call http://localhost:5000/
+
 ## API specification
 
 ### 1. Authorisation
 
-| Endpoint    | Method | Params                 | Format              | Description       |
-| ----------- | ------ | ---------------------- | ------------------- | ----------------- |
-| `/add_user` | POST   | `username`, `password` | multipart/form-data | Create a new user |
-| `/login`    | POST   | `username`, `password` | multipart/form-data | User login        |
-| `/logout`   | POST   | —                      | —                   | User logout       |
+| Endpoint    | Method | Params              | Format              | Description       |
+| ----------- | ------ |---------------------| ------------------- | ----------------- |
+| `/add_user` | POST   | `login`, `password` | multipart/form-data | Create a new user |
+| `/login`    | POST   | `login`, `password` | multipart/form-data | User login        |
+| `/logout`   | POST   | —                   | —                   | User logout       |
 
 ### 2. Create and Update Networks
 
@@ -25,8 +28,8 @@ docker-compose up -d
 
 **POST** `/add_network`  
 **Body (multipart/form-data)**  
-- `name` (text): network name  
-- `public` (text, optional): `"true"` or `"false"` (default: `"false"`)  
+- `name` (str): network name  
+- `public` (str, optional): `"true"` or `"false"` (default: `"false"`)  
 - `file` (file): GeoJSON FeatureCollection  
 
 **Description**  
@@ -43,8 +46,8 @@ Returns network data (see *Getting Network Data* section).
 
 **POST** `/update_network`  
 **Body (multipart/form-data)**  
-- `id` (text): network ID (preferred)  
-- `name` (text): network name (fallback)  
+- `id` (int): network ID (preferred)  
+- `name` (str): network name  
 - `file` (file): GeoJSON FeatureCollection  
 
 **Description**  
@@ -63,7 +66,7 @@ Returns network data (see *Getting Network Data* section).
 **GET** `/network/`  
 **Query parameters:**
 - `id` (int): network ID (preferred)
-- `name` (str): network name (fallback)
+- `name` (str): network name
 
 **Description**  
 Returns properties of the network. Search by ID or by name (ID has priority).
@@ -75,14 +78,14 @@ Returns properties of the network. Search by ID or by name (ID has priority).
 **Response example:**
 ```json
 {
-  "id": 123,
+  "network_id": 123,
   "name": "My Road Network",
   "owner_id": 42,
   "owner_name": "oleg",
   "public": false,
   "latest_version": 3,
-  "created_at": "Sun, 20 Jul 2025 07:59:28 GMT",
-  "versions": { "1":  1, "2": 5, "3": 251}
+  "versions": { "1":  1, "2": 5, "3": 251},
+  "created_at": "Sun, 20 Jul 2025 07:59:28 GMT"
 }
 ```
 
@@ -94,7 +97,7 @@ Returns properties of the network. Search by ID or by name (ID has priority).
 
 **Query parameters:**
 - `id` (int): network ID (preferred)
-- `name` (str): network name (fallback)
+- `name` (str): network name
 - `version` (int, optional; default = latest): version number
 
 **Description**  
@@ -109,8 +112,9 @@ Returns certain version of the edges of a network. Search by ID or by name (ID h
 {
   "network_id": 123,
   "name": "My Road Network",
-  "map_id": 987,
   "version": 3,
+  "map_id": 987,
+  "created_at": "Sun, 20 Jul 2025 07:59:28 GMT",
   "edges": [ ]
 }
 ```

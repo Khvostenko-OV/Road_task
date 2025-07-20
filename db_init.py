@@ -45,7 +45,7 @@ if __name__ == "__main__":
     ''')
 
     cur.execute(f'''
-        CREATE TABLE networks (
+        CREATE TABLE IF NOT EXISTS networks (
             id SERIAL PRIMARY KEY,
             name VARCHAR(128) NOT NULL UNIQUE,
             owner_id INTEGER REFERENCES users(id),
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     ''')
 
     cur.execute(f'''
-        CREATE TABLE maps (
+        CREATE TABLE IF NOT EXISTS maps (
             id SERIAL PRIMARY KEY,
             network_id INTEGER REFERENCES networks(id) ON DELETE CASCADE,
             version INTEGER NOT NULL DEFAULT 1,
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     ''')
 
     cur.execute(f'''
-        CREATE TABLE features (
+        CREATE TABLE IF NOT EXISTS features (
             id SERIAL PRIMARY KEY,
             map_id INTEGER REFERENCES maps(id) ON DELETE CASCADE,
             type VARCHAR(32),
