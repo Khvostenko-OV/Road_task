@@ -111,7 +111,7 @@ Returns certain version of the edges of a network. Search by ID or by name (ID h
   "name": "My Road Network",
   "map_id": 987,
   "version": 3,
-  "edges": { json with edges }
+  "edges": [ ]
 }
 ```
 
