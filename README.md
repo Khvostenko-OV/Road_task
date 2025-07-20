@@ -3,8 +3,8 @@
 ## Run Application
 
 ```bash
-git clone https://github.com/ВАШ_ПОЛЬЗОВАТЕЛЬ/ВАШ_РЕПОЗИТОРИЙ.git
-cd ВАШ_РЕПОЗИТОРИЙ
+git clone https://github.com/Khvostenko-OV/Road_task.git
+cd Road_task
 docker-compose pull
 docker-compose up -d
 ```
